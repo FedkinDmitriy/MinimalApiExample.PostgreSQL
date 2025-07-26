@@ -47,7 +47,7 @@ app.MapGet("/users/{id}", async Task<Results<Ok<User>, NotFound>> (MyContext dbC
     return user is null ? TypedResults.NotFound() : TypedResults.Ok(user);
 });
 
-app.MapPost("/users/add", async Task<Results<Created<User>, BadRequest>> (MyContext dbContext, [FromBody] User user) =>
+app.MapPost("/users", async Task<Results<Created<User>, BadRequest>> (MyContext dbContext, [FromBody] User user) =>
 {
     if (user is not null)
     {
@@ -58,7 +58,7 @@ app.MapPost("/users/add", async Task<Results<Created<User>, BadRequest>> (MyCont
     return TypedResults.BadRequest();
 });
 
-app.MapPut("/users/upd", async Task<Results<NoContent, BadRequest, NotFound>> (MyContext dbContext, [FromBody] User updatedUser) =>
+app.MapPut("/users", async Task<Results<NoContent, BadRequest, NotFound>> (MyContext dbContext, [FromBody] User updatedUser) =>
 {
     if (updatedUser is null) return TypedResults.BadRequest();
 
@@ -71,5 +71,19 @@ app.MapPut("/users/upd", async Task<Results<NoContent, BadRequest, NotFound>> (M
     await dbContext.SaveChangesAsync();
     return TypedResults.NoContent();
 });
+
+app.MapDelete("/users/{id}", async Task<Results<NoContent,NotFound>> (MyContext dbContext, int id) =>
+{
+    var user = await dbContext.Users.FindAsync(id);
+
+    if(user is not null)
+    {
+        dbContext.Remove(user);
+        await dbContext.SaveChangesAsync();
+        return TypedResults.NoContent();
+    }
+    else
+        return TypedResults.NotFound();
+} );
 
 app.Run();
