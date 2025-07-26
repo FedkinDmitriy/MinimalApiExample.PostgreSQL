@@ -58,4 +58,18 @@ app.MapPost("/users/add", async Task<Results<Created<User>, BadRequest>> (MyCont
     return TypedResults.BadRequest();
 });
 
+app.MapPut("/users/upd", async Task<Results<NoContent, BadRequest, NotFound>> (MyContext dbContext, [FromBody] User updatedUser) =>
+{
+    if (updatedUser is null) return TypedResults.BadRequest();
+
+    var existingUser = await dbContext.Users.FindAsync(updatedUser.Id);
+
+    if (existingUser is null) return TypedResults.NotFound();
+
+    dbContext.Entry(existingUser).CurrentValues.SetValues(updatedUser);
+
+    await dbContext.SaveChangesAsync();
+    return TypedResults.NoContent();
+});
+
 app.Run();
