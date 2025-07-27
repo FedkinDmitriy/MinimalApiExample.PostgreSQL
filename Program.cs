@@ -36,9 +36,10 @@ app.MapGet("/check", async (MyContext db) =>
     }
 });
 
-app.MapGet("/users", async Task<Ok<List<User>>> (MyContext dbContext) =>
+app.MapGet("/users", async Task<Results<Ok<List<User>>, NoContent>> (MyContext dbContext) =>
 {
-    return TypedResults.Ok(await dbContext.Users.AsNoTracking().ToListAsync()); // явное указание типа List<User>
+    var list = await dbContext.Users.AsNoTracking().ToListAsync();
+    return list.Count > 0 ? TypedResults.Ok(list) : TypedResults.NoContent();
 });
 
 app.MapGet("/users/{id}", async Task<Results<Ok<User>, NotFound>> (MyContext dbContext, int id) =>
