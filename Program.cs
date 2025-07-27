@@ -12,7 +12,7 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddDbContext<MyContext>(o => o.UseNpgsql("Host=localhost;Port=5432;Database=TestDb;Username=postgres;Password=251187"));
 
-var app = builder.Build();
+var app = builder.Build(); // автоматически добавляет UseDeveloperExceptionPage() в режиме разработки
 
 // Настройка Swagger middleware
 if (app.Environment.IsDevelopment())
@@ -22,8 +22,12 @@ if (app.Environment.IsDevelopment())
 }
 
 
+if (!app.Environment.IsDevelopment())
+{
+    app.UseExceptionHandler("/error"); // обработка ошибок в промокружении без передачи данных о коде
+}
 
-
+app.MapGet("/error", () => "Sorry, an error occurred.");
 
 
 
