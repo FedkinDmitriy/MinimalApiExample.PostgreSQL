@@ -21,6 +21,14 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+
+
+
+
+
+
+
+
 app.MapGet("/", () => "Hello World!");
 
 app.MapGet("/check", async (MyContext db) =>
