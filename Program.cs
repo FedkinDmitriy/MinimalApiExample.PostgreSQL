@@ -6,6 +6,8 @@ using MinimalApiExample.PostgreSQL.Data.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddProblemDetails(); //добавляет реализацию IProblemDetailsService
+
 // Добавляем сервисы Swagger
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -13,6 +15,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<MyContext>(o => o.UseNpgsql("Host=localhost;Port=5432;Database=TestDb;Username=postgres;Password=251187"));
 
 var app = builder.Build(); // автоматически добавляет UseDeveloperExceptionPage() в режиме разработки
+
 
 // Настройка Swagger middleware
 if (app.Environment.IsDevelopment())
@@ -28,6 +31,7 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.MapGet("/error", () => "Sorry, an error occurred.");
+app.UseStatusCodePages(); // Api возвращает ответ Problem Details для всех ответов об ошибках ( builder.Services.AddProblemDetails();)
 
 
 
