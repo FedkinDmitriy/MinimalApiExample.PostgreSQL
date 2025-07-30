@@ -71,7 +71,7 @@ app.MapPost("/users", async (MyContext dbContext, User user) =>
     await dbContext.SaveChangesAsync();
     return TypedResults.Created("/users", user);
 })
-.AddEndpointFilter<IdValidationFilter>().AddEndpointFilter<UserValidationFilter>();
+.AddEndpointFilter<UserValidationFilter>();
 
 app.MapPut("/users", async Task<Results<NoContent, BadRequest, NotFound>> (MyContext dbContext, [FromBody] User updatedUser) =>
 {
