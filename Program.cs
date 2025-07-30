@@ -63,7 +63,7 @@ app.MapGet("/users/{id}", async Task<Results<Ok<User>, NotFound>> (MyContext dbC
 {
     var user = await dbContext.Users.FindAsync(id);
     return user is null ? TypedResults.NotFound() : TypedResults.Ok(user);
-});
+}).AddEndpointFilter<IdValidationFilter>();
 
 app.MapPost("/users", async (MyContext dbContext, User user) =>
 {
@@ -71,7 +71,7 @@ app.MapPost("/users", async (MyContext dbContext, User user) =>
     await dbContext.SaveChangesAsync();
     return TypedResults.Created("/users", user);
 })
-.AddEndpointFilter<UserValidationFilter>();
+.AddEndpointFilter<IdValidationFilter>().AddEndpointFilter<UserValidationFilter>();
 
 app.MapPut("/users", async Task<Results<NoContent, BadRequest, NotFound>> (MyContext dbContext, [FromBody] User updatedUser) =>
 {
@@ -99,6 +99,6 @@ app.MapDelete("/users/{id}", async Task<Results<NoContent,NotFound>> (MyContext 
     }
     else
         return TypedResults.NotFound();
-} );
+} ).AddEndpointFilter<IdValidationFilter>();
 
 app.Run();
