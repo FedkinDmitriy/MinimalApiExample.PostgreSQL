@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MinimalApiExample.PostgreSQL.Data;
+using MinimalApiExample.PostgreSQL.Data.Filters;
 using MinimalApiExample.PostgreSQL.Data.Models;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -64,43 +65,13 @@ app.MapGet("/users/{id}", async Task<Results<Ok<User>, NotFound>> (MyContext dbC
     return user is null ? TypedResults.NotFound() : TypedResults.Ok(user);
 });
 
-app.MapPost("/users", async Task<Results<Created<User>, ValidationProblem>> (MyContext dbContext, [FromBody] User user) =>
+app.MapPost("/users", async (MyContext dbContext, User user) =>
 {
-    var errors = new Dictionary<string, string[]>();
-
-    if (user is null)
-    {
-        errors.Add("", new[] { "Тело запроса не может быть пустым" });
-        return TypedResults.ValidationProblem(errors);
-    }
-
-    // Валидация полей
-    if (string.IsNullOrEmpty(user.firstName))
-    {
-        errors.Add(nameof(user.firstName), new[] { "Имя обязательно для заполнения" });
-    }
-    else if (user.firstName.Length > 30)
-    {
-        errors.Add(nameof(user.firstName), new[] { "Имя не должно превышать 30 символов" });
-    }
-
-    if (string.IsNullOrEmpty(user.lastName))
-    {
-        errors.Add(nameof(user.lastName), new[] { "Фамилия обязательна для заполнения" });
-    }
-    else if (user.lastName.Length > 50)
-    {
-        errors.Add(nameof(user.lastName), new[] { "Фамилия не должна превышать 50 символов" });
-    }
-
-    if (errors.Count > 0)
-    {
-        return TypedResults.ValidationProblem(errors);
-    }
     await dbContext.Users.AddAsync(user);
     await dbContext.SaveChangesAsync();
     return TypedResults.Created("/users", user);
-});
+})
+.AddEndpointFilter<UserValidationFilter>();
 
 app.MapPut("/users", async Task<Results<NoContent, BadRequest, NotFound>> (MyContext dbContext, [FromBody] User updatedUser) =>
 {
