@@ -8,6 +8,7 @@ namespace MinimalApiExample.PostgreSQL.Data
         public MyContext(DbContextOptions<MyContext> options) : base(options) { }
 
         public DbSet<User> Users { get; set; }
+        public DbSet<Blog> Blogs { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -19,6 +20,19 @@ namespace MinimalApiExample.PostgreSQL.Data
                 entity.Property(p => p.firstName).HasColumnName("firstName");
                 entity.Property(p => p.lastName).HasColumnName("lastName");
                 entity.Property(p => p.dateOfBirth).HasColumnName("dateOfBirth");
+            });
+
+            modelBuilder.Entity<Blog>(entity =>
+            {
+                entity.ToTable("blogs");
+                entity.Property(p => p.Id).HasColumnName("id");
+                entity.Property(p => p.Title).HasColumnName("title");
+                entity.Property(p => p.CreatedDate).HasColumnName("created");
+                entity.Property(p => p.Context).HasColumnName("context");
+                entity.Property(p => p.UserId).HasColumnName("user_id");
+
+
+                entity.HasOne( u => u.User).WithMany(u => u.Blogs).HasForeignKey(u => u.User.Id);
             });
         }
     }

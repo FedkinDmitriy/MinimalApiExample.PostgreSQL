@@ -18,5 +18,9 @@
         /// Дата рождения пользователя
         /// </summary>
         public DateOnly dateOfBirth { get; set; }
+
+
+
+        public ICollection<Blog> Blogs { get; set; } = []; //навигационное свойство
     }
 }

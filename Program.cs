@@ -61,7 +61,8 @@ app.MapGet("/users", async Task<Results<Ok<List<User>>, NoContent>> (MyContext d
 
 app.MapGet("/users/{id}", async Task<Results<Ok<User>, NotFound>> (MyContext dbContext, int id) =>
 {
-    var user = await dbContext.Users.FindAsync(id);
+    var user = await dbContext.Users.AsNoTracking().Include(u => u.Blogs).FirstOrDefaultAsync(u => u.Id == id);
+    //var user = await dbContext.Users.FindAsync(id); // FindAsync игнорирует Include
     return user is null ? TypedResults.NotFound() : TypedResults.Ok(user);
 }).AddEndpointFilter<IdValidationFilter>();
 
