@@ -32,7 +32,7 @@ namespace MinimalApiExample.PostgreSQL.Data
                 entity.Property(p => p.UserId).HasColumnName("user_id");
 
 
-                entity.HasOne( u => u.User).WithMany(u => u.Blogs).HasForeignKey(u => u.User.Id);
+                entity.HasOne( b => b.User).WithMany(u => u.Blogs).HasForeignKey(b => b.UserId);
             });
         }
     }
