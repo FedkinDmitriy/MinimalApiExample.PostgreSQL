@@ -59,18 +59,26 @@ app.MapGet("/users", async Task<Results<Ok<List<User>>, NoContent>> (MyContext d
     return list.Count > 0 ? TypedResults.Ok(list) : TypedResults.NoContent();
 });
 
-app.MapGet("/users/{id}", async Task<Results<Ok<User>, NotFound>> (MyContext dbContext, int id) =>
+app.MapGet("/users/{id}", async Task<Results<Ok<UserDTO>, NotFound>> (MyContext dbContext, int id) =>
 {
     var user = await dbContext.Users.AsNoTracking().Include(u => u.Blogs).FirstOrDefaultAsync(u => u.Id == id);
     //var user = await dbContext.Users.FindAsync(id); // FindAsync игнорирует Include
 
+    if(user is not null)
+    {
+        UserDTO dto = new() //без DTO будет цикличная сериализация
+        {
+            Id = user.Id,
+            FirstName = user.firstName,
+            LastName = user.lastName,
+            Birth = user.dateOfBirth,
+            Blogs = user.Blogs.Select(b => new BlogDTO() { Id = b.Id, Title = b.Title, CreatedDate = b.CreatedDate, Context = b.Context}).ToList()
+        };
 
-
-
-
-
-
-    return user is null ? TypedResults.NotFound() : TypedResults.Ok(user);
+        return TypedResults.Ok(dto);
+    }
+    
+    return TypedResults.NotFound();
 }).AddEndpointFilter<IdValidationFilter>();
 
 app.MapPost("/users", async (MyContext dbContext, User user) =>
