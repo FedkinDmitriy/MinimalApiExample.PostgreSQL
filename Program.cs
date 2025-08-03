@@ -233,6 +233,27 @@ app.MapPost("/blogs/{id}", async Task<Results<Created<BlogResponseDTO>, BadReque
         return TypedResults.BadRequest("Нет такого пользователя");
 }).AddEndpointFilter<IdValidationFilter>();
 
+app.MapDelete("/blogs/{id}", async Task<Results<NoContent, NotFound, BadRequest<string>>>(MyContext dbContext, int id) => { 
 
+    var blog = await dbContext.Blogs.FindAsync(id);
+
+    if(blog is not null)
+    {
+        try
+        {
+            dbContext.Remove(blog);
+            await dbContext.SaveChangesAsync();
+            return TypedResults.NoContent();
+        }
+        catch (DbUpdateException ex)
+        {
+            return TypedResults.BadRequest($"Ошибка базы данных {ex.Message}");
+        }
+    }
+    else
+    {
+        return TypedResults.NotFound();
+    }
+}).AddEndpointFilter<IdValidationFilter>();
 
 app.Run();
