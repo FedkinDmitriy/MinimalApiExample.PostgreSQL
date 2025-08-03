@@ -206,35 +206,32 @@ app.MapGet("/blogs/{id}", async Task<Results<Ok<BlogResponseDTO>, NotFound, BadR
     }
 }).AddEndpointFilter<IdValidationFilter>();
 
+app.MapPost("/blogs/{id}", async Task<Results<Created<BlogResponseDTO>, BadRequest<string>>> (MyContext dbContext, int id, BlogResponseDTO blogDTO) =>
+{
+    if (await dbContext.Users.AnyAsync(u => u.Id == id))
+    {
+        Blog blog = new()
+        {
+            Title = blogDTO.Title,
+            CreatedDate = blogDTO.CreatedDate,
+            Context = blogDTO.Context,
+            UserId = id
+        };
+        try
+        {
+            await dbContext.Blogs.AddAsync(blog);
+            await dbContext.SaveChangesAsync();
 
-//app.MapPost("/blogs{id}", async Task<Results<Created<BlogDTO>, BadRequest<string>>>(MyContext dbContext, BlogDTO blogDTO, int id) =>
-//{
-//    //var userExists = await dbContext.Users.AnyAsync(u => u.Id == userId);
-//    //if (!userExists) return BadRequest("User not found");
-
-//    var user = await dbContext.Users.FindAsync(id);
-//    if(user is not null)
-//    {
-//        Blog blog = new()
-//        {
-//            Title = blogDTO.Title,
-//            CreatedDate = blogDTO.CreatedDate,
-//            Context = blogDTO.Context,
-//            UserId = id
-//        };
-//        try
-//        {
-//            await dbContext.Blogs.AddAsync(blog);
-//            await dbContext.SaveChangesAsync();
-//            return TypedResults.Created("/blogs", blogDTO);
-//        }
-//        catch (Exception ex)
-//        {
-//            return TypedResults.BadRequest(ex.Message);
-//        }
-//    }
-//    return TypedResults.BadRequest("Нет такого пользователя");
-//});
+            return TypedResults.Created($"/blogs/{blog.Id}", blogDTO);
+        }
+        catch (Exception ex)
+        {
+            return TypedResults.BadRequest(ex.Message);
+        }
+    }
+    else
+        return TypedResults.BadRequest("Нет такого пользователя");
+}).AddEndpointFilter<IdValidationFilter>();
 
 
 
