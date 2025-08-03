@@ -59,6 +59,25 @@ app.MapGet("/users", async Task<Results<Ok<List<User>>, NoContent>> (MyContext d
     return list.Count > 0 ? TypedResults.Ok(list) : TypedResults.NoContent();
 });
 
+app.MapGet("/blogs/{id}", async Task<Results<Ok<BlogDTO>, NotFound>> (MyContext dbContext, int id) => { 
+
+    var blog = await dbContext.Blogs.AsNoTracking().FirstOrDefaultAsync(b => b.Id == id);
+    if(blog is not null)
+    {
+        BlogDTO dto = new()
+        {
+            Id = blog.Id,
+            Title = blog.Title,
+            CreatedDate = blog.CreatedDate,
+            Context = blog.Context
+        };
+        return TypedResults.Ok(dto);
+    }
+    return TypedResults.NotFound();
+
+}).AddEndpointFilter<IdValidationFilter>();
+
+
 app.MapGet("/users/{id}", async Task<Results<Ok<UserDTO>, NotFound>> (MyContext dbContext, int id) =>
 {
     var user = await dbContext.Users.AsNoTracking().Include(u => u.Blogs).FirstOrDefaultAsync(u => u.Id == id);
