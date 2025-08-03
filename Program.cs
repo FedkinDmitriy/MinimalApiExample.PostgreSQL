@@ -114,6 +114,55 @@ app.MapGet("/users/{id}", async Task<Results<Ok<UserResponseDTOWithBlogs>, NotFo
 
 }).AddEndpointFilter<IdValidationFilter>();
 
+app.MapPost("/users", async Task<Results<Created<UserCreateDTO>, BadRequest<string>>>(MyContext dbContext, UserCreateDTO user) =>
+{
+    try
+    {
+        User newUser = new()
+        {
+            firstName = user.firstName,
+            lastName = user.lastName,
+            dateOfBirth = user.dateOfBirth
+        };
+
+        await dbContext.Users.AddAsync(newUser);
+        await dbContext.SaveChangesAsync();
+        return TypedResults.Created($"/users/{newUser.Id}", user);
+    }
+    catch (Exception ex)
+    {
+        return TypedResults.BadRequest(ex.Message);
+    }
+})
+.AddEndpointFilter<UserValidationFilter>();
+
+//app.MapPut("/users", async Task<Results<NoContent, BadRequest, NotFound>> (MyContext dbContext, [FromBody] User updatedUser) =>
+//{
+//    if (updatedUser is null) return TypedResults.BadRequest();
+
+//    var existingUser = await dbContext.Users.FindAsync(updatedUser.Id);
+
+//    if (existingUser is null) return TypedResults.NotFound();
+
+//    dbContext.Entry(existingUser).CurrentValues.SetValues(updatedUser);
+
+//    await dbContext.SaveChangesAsync();
+//    return TypedResults.NoContent();
+//});
+
+//app.MapDelete("/users/{id}", async Task<Results<NoContent,NotFound>> (MyContext dbContext, int id) =>
+//{
+//    var user = await dbContext.Users.FindAsync(id);
+
+//    if(user is not null)
+//    {
+//        dbContext.Remove(user);
+//        await dbContext.SaveChangesAsync();
+//        return TypedResults.NoContent();
+//    }
+//    else
+//        return TypedResults.NotFound();
+//} ).AddEndpointFilter<IdValidationFilter>();
 
 //app.MapGet("/blogs/{id}", async Task<Results<Ok<BlogDTO>, NotFound>> (MyContext dbContext, int id) => { 
 
@@ -163,40 +212,6 @@ app.MapGet("/users/{id}", async Task<Results<Ok<UserResponseDTOWithBlogs>, NotFo
 //    return TypedResults.BadRequest("Нет такого пользователя");
 //});
 
-//app.MapPost("/users", async (MyContext dbContext, User user) =>
-//{
-//    await dbContext.Users.AddAsync(user);
-//    await dbContext.SaveChangesAsync();
-//    return TypedResults.Created("/users", user);
-//})
-//.AddEndpointFilter<UserValidationFilter>();
 
-//app.MapPut("/users", async Task<Results<NoContent, BadRequest, NotFound>> (MyContext dbContext, [FromBody] User updatedUser) =>
-//{
-//    if (updatedUser is null) return TypedResults.BadRequest();
-
-//    var existingUser = await dbContext.Users.FindAsync(updatedUser.Id);
-
-//    if (existingUser is null) return TypedResults.NotFound();
-
-//    dbContext.Entry(existingUser).CurrentValues.SetValues(updatedUser);
-
-//    await dbContext.SaveChangesAsync();
-//    return TypedResults.NoContent();
-//});
-
-//app.MapDelete("/users/{id}", async Task<Results<NoContent,NotFound>> (MyContext dbContext, int id) =>
-//{
-//    var user = await dbContext.Users.FindAsync(id);
-
-//    if(user is not null)
-//    {
-//        dbContext.Remove(user);
-//        await dbContext.SaveChangesAsync();
-//        return TypedResults.NoContent();
-//    }
-//    else
-//        return TypedResults.NotFound();
-//} ).AddEndpointFilter<IdValidationFilter>();
 
 app.Run();

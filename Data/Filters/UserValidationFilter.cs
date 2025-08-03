@@ -1,5 +1,5 @@
 ﻿
-using MinimalApiExample.PostgreSQL.Data.Models;
+using MinimalApiExample.PostgreSQL.Data.DTOs;
 
 namespace MinimalApiExample.PostgreSQL.Data.Filters
 {
@@ -8,7 +8,7 @@ namespace MinimalApiExample.PostgreSQL.Data.Filters
         public async ValueTask<object?> InvokeAsync(EndpointFilterInvocationContext context, EndpointFilterDelegate next)
         {
             // 1. Получаем аргумент User из контекста
-            var user = context.Arguments.OfType<User>().FirstOrDefault();
+            var user = context.Arguments.OfType<UserCreateDTO>().FirstOrDefault();
 
             // 2. Создаем словарь для ошибок
             var errors = new Dictionary<string, string[]>();
@@ -38,6 +38,14 @@ namespace MinimalApiExample.PostgreSQL.Data.Filters
                 errors.Add("lastName", new[] { "Фамилия не должна превышать 50 символов" });
             }
 
+            if (user.dateOfBirth > DateOnly.FromDateTime(DateTime.UtcNow))
+            {
+                errors.Add("dateOfBirth", new[] { "Дата рождения не может быть в будущем" });
+            }
+            if (user.dateOfBirth == default)
+            {
+                errors.Add("dateOfBirth", new[] { "Дата рождения обязательна для заполнения" });
+            }
 
             if (errors.Count > 0)
             {
