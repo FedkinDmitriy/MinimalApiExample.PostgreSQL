@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MinimalApiExample.PostgreSQL.Data;
+using MinimalApiExample.PostgreSQL.Data.DTOs;
 using MinimalApiExample.PostgreSQL.Data.Filters;
 using MinimalApiExample.PostgreSQL.Data.Models;
 
@@ -53,115 +54,121 @@ app.MapGet("/check", async (MyContext db) =>
     }
 });
 
-app.MapGet("/users", async Task<Results<Ok<List<User>>, NoContent>> (MyContext dbContext) =>
+app.MapGet("/users", async Task<Results<Ok<List<UserResponseDTO>>, NoContent>> (MyContext dbContext) =>
 {
-    var list = await dbContext.Users.AsNoTracking().ToListAsync();
-    return list.Count > 0 ? TypedResults.Ok(list) : TypedResults.NoContent();
+    var response = await dbContext.Users.AsNoTracking().Select(u => new UserResponseDTO() { 
+        Id = u.Id,
+        firstName = u.firstName,
+        lastName = u.lastName,
+        dateOfBirth = u.dateOfBirth,
+        HasBlogs = u.Blogs.Any()
+    }).ToListAsync();
+    return response.Count > 0 ? TypedResults.Ok(response) : TypedResults.NoContent();
 });
 
-app.MapGet("/blogs/{id}", async Task<Results<Ok<BlogDTO>, NotFound>> (MyContext dbContext, int id) => { 
+//app.MapGet("/blogs/{id}", async Task<Results<Ok<BlogDTO>, NotFound>> (MyContext dbContext, int id) => { 
 
-    var blog = await dbContext.Blogs.AsNoTracking().FirstOrDefaultAsync(b => b.Id == id);
-    if(blog is not null)
-    {
-        BlogDTO dto = new()
-        {
-            Id = blog.Id,
-            Title = blog.Title,
-            CreatedDate = blog.CreatedDate,
-            Context = blog.Context
-        };
-        return TypedResults.Ok(dto);
-    }
-    return TypedResults.NotFound();
+//    var blog = await dbContext.Blogs.AsNoTracking().FirstOrDefaultAsync(b => b.Id == id);
+//    if(blog is not null)
+//    {
+//        BlogDTO dto = new()
+//        {
+//            Id = blog.Id,
+//            Title = blog.Title,
+//            CreatedDate = blog.CreatedDate,
+//            Context = blog.Context
+//        };
+//        return TypedResults.Ok(dto);
+//    }
+//    return TypedResults.NotFound();
 
-}).AddEndpointFilter<IdValidationFilter>();
+//}).AddEndpointFilter<IdValidationFilter>();
 
-app.MapGet("/users/{id}", async Task<Results<Ok<UserDTO>, NotFound>> (MyContext dbContext, int id) =>
-{
-    var user = await dbContext.Users.AsNoTracking().Include(u => u.Blogs).FirstOrDefaultAsync(u => u.Id == id);
-    //var user = await dbContext.Users.FindAsync(id); // FindAsync игнорирует Include
+//app.MapGet("/users/{id}", async Task<Results<Ok<UserDTO>, NotFound>> (MyContext dbContext, int id) =>
+//{
+//    var user = await dbContext.Users.AsNoTracking().Include(u => u.Blogs).FirstOrDefaultAsync(u => u.Id == id);
+//    //var user = await dbContext.Users.FindAsync(id); // FindAsync игнорирует Include
 
-    if(user is not null)
-    {
-        UserDTO dto = new() //без DTO будет цикличная сериализация
-        {
-            Id = user.Id,
-            FirstName = user.firstName,
-            LastName = user.lastName,
-            Birth = user.dateOfBirth,
-            Blogs = user.Blogs.Select(b => new BlogDTO() { Id = b.Id, Title = b.Title, CreatedDate = b.CreatedDate, Context = b.Context}).ToList()
-        };
+//    if(user is not null)
+//    {
+//        UserDTO dto = new() //без DTO будет цикличная сериализация
+//        {
+//            Id = user.Id,
+//            FirstName = user.firstName,
+//            LastName = user.lastName,
+//            Birth = user.dateOfBirth,
+//            Blogs = user.Blogs.Select(b => new BlogDTO() { Id = b.Id, Title = b.Title, CreatedDate = b.CreatedDate, Context = b.Context}).ToList()
+//        };
 
-        return TypedResults.Ok(dto);
-    }
-    
-    return TypedResults.NotFound();
-}).AddEndpointFilter<IdValidationFilter>();
+//        return TypedResults.Ok(dto);
+//    }
 
-app.MapPost("/blogs{id}", async Task<Results<Created<BlogDTO>, BadRequest<string>>>(MyContext dbContext, BlogDTO blogDTO, int id) =>
-{
-    //var userExists = await dbContext.Users.AnyAsync(u => u.Id == userId);
-    //if (!userExists) return BadRequest("User not found");
+//    return TypedResults.NotFound();
+//}).AddEndpointFilter<IdValidationFilter>();
 
-    var user = await dbContext.Users.FindAsync(id);
-    if(user is not null)
-    {
-        Blog blog = new()
-        {
-            Title = blogDTO.Title,
-            CreatedDate = blogDTO.CreatedDate,
-            Context = blogDTO.Context,
-            UserId = id
-        };
-        try
-        {
-            await dbContext.Blogs.AddAsync(blog);
-            await dbContext.SaveChangesAsync();
-            return TypedResults.Created("/blogs", blogDTO);
-        }
-        catch (Exception ex)
-        {
-            return TypedResults.BadRequest(ex.Message);
-        }
-    }
-    return TypedResults.BadRequest("Нет такого пользователя");
-});
+//app.MapPost("/blogs{id}", async Task<Results<Created<BlogDTO>, BadRequest<string>>>(MyContext dbContext, BlogDTO blogDTO, int id) =>
+//{
+//    //var userExists = await dbContext.Users.AnyAsync(u => u.Id == userId);
+//    //if (!userExists) return BadRequest("User not found");
 
-app.MapPost("/users", async (MyContext dbContext, User user) =>
-{
-    await dbContext.Users.AddAsync(user);
-    await dbContext.SaveChangesAsync();
-    return TypedResults.Created("/users", user);
-})
-.AddEndpointFilter<UserValidationFilter>();
+//    var user = await dbContext.Users.FindAsync(id);
+//    if(user is not null)
+//    {
+//        Blog blog = new()
+//        {
+//            Title = blogDTO.Title,
+//            CreatedDate = blogDTO.CreatedDate,
+//            Context = blogDTO.Context,
+//            UserId = id
+//        };
+//        try
+//        {
+//            await dbContext.Blogs.AddAsync(blog);
+//            await dbContext.SaveChangesAsync();
+//            return TypedResults.Created("/blogs", blogDTO);
+//        }
+//        catch (Exception ex)
+//        {
+//            return TypedResults.BadRequest(ex.Message);
+//        }
+//    }
+//    return TypedResults.BadRequest("Нет такого пользователя");
+//});
 
-app.MapPut("/users", async Task<Results<NoContent, BadRequest, NotFound>> (MyContext dbContext, [FromBody] User updatedUser) =>
-{
-    if (updatedUser is null) return TypedResults.BadRequest();
+//app.MapPost("/users", async (MyContext dbContext, User user) =>
+//{
+//    await dbContext.Users.AddAsync(user);
+//    await dbContext.SaveChangesAsync();
+//    return TypedResults.Created("/users", user);
+//})
+//.AddEndpointFilter<UserValidationFilter>();
 
-    var existingUser = await dbContext.Users.FindAsync(updatedUser.Id);
+//app.MapPut("/users", async Task<Results<NoContent, BadRequest, NotFound>> (MyContext dbContext, [FromBody] User updatedUser) =>
+//{
+//    if (updatedUser is null) return TypedResults.BadRequest();
 
-    if (existingUser is null) return TypedResults.NotFound();
+//    var existingUser = await dbContext.Users.FindAsync(updatedUser.Id);
 
-    dbContext.Entry(existingUser).CurrentValues.SetValues(updatedUser);
+//    if (existingUser is null) return TypedResults.NotFound();
 
-    await dbContext.SaveChangesAsync();
-    return TypedResults.NoContent();
-});
+//    dbContext.Entry(existingUser).CurrentValues.SetValues(updatedUser);
 
-app.MapDelete("/users/{id}", async Task<Results<NoContent,NotFound>> (MyContext dbContext, int id) =>
-{
-    var user = await dbContext.Users.FindAsync(id);
+//    await dbContext.SaveChangesAsync();
+//    return TypedResults.NoContent();
+//});
 
-    if(user is not null)
-    {
-        dbContext.Remove(user);
-        await dbContext.SaveChangesAsync();
-        return TypedResults.NoContent();
-    }
-    else
-        return TypedResults.NotFound();
-} ).AddEndpointFilter<IdValidationFilter>();
+//app.MapDelete("/users/{id}", async Task<Results<NoContent,NotFound>> (MyContext dbContext, int id) =>
+//{
+//    var user = await dbContext.Users.FindAsync(id);
+
+//    if(user is not null)
+//    {
+//        dbContext.Remove(user);
+//        await dbContext.SaveChangesAsync();
+//        return TypedResults.NoContent();
+//    }
+//    else
+//        return TypedResults.NotFound();
+//} ).AddEndpointFilter<IdValidationFilter>();
 
 app.Run();
