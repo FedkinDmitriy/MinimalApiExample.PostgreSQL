@@ -182,23 +182,29 @@ app.MapDelete("/users/{id}", async Task<Results<NoContent, NotFound, BadRequest<
     }
 }).AddEndpointFilter<IdValidationFilter>();
 
-//app.MapGet("/blogs/{id}", async Task<Results<Ok<BlogDTO>, NotFound>> (MyContext dbContext, int id) => { 
-
-//    var blog = await dbContext.Blogs.AsNoTracking().FirstOrDefaultAsync(b => b.Id == id);
-//    if(blog is not null)
-//    {
-//        BlogDTO dto = new()
-//        {
-//            Id = blog.Id,
-//            Title = blog.Title,
-//            CreatedDate = blog.CreatedDate,
-//            Context = blog.Context
-//        };
-//        return TypedResults.Ok(dto);
-//    }
-//    return TypedResults.NotFound();
-
-//}).AddEndpointFilter<IdValidationFilter>();
+app.MapGet("/blogs/{id}", async Task<Results<Ok<BlogResponseDTO>, NotFound, BadRequest<string>>> (MyContext dbContext, int id) =>
+{
+    try
+    {
+        var blog = await dbContext.Blogs.AsNoTracking().FirstOrDefaultAsync(b => b.Id == id);
+        if (blog is not null)
+        {
+            BlogResponseDTO dto = new()
+            {
+                Id = blog.Id,
+                Title = blog.Title,
+                CreatedDate = blog.CreatedDate,
+                Context = blog.Context
+            };
+            return TypedResults.Ok(dto);
+        }
+        return TypedResults.NotFound();
+    }
+    catch (Exception ex)
+    {
+        return TypedResults.BadRequest(ex.Message);
+    }
+}).AddEndpointFilter<IdValidationFilter>();
 
 
 //app.MapPost("/blogs{id}", async Task<Results<Created<BlogDTO>, BadRequest<string>>>(MyContext dbContext, BlogDTO blogDTO, int id) =>
