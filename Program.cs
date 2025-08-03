@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using MinimalApiExample.PostgreSQL.Data;
 using MinimalApiExample.PostgreSQL.Data.DTOs;
 using MinimalApiExample.PostgreSQL.Data.Filters;
@@ -158,20 +159,28 @@ app.MapPut("/users/{id}", async Task<Results<NoContent, BadRequest<string>, NotF
     }
 }).AddEndpointFilter<UserValidationFilter>();
 
+app.MapDelete("/users/{id}", async Task<Results<NoContent, NotFound, BadRequest<string>>> (MyContext dbContext, int id) =>
+{
+    var user = await dbContext.Users.FindAsync(id);
 
-//app.MapDelete("/users/{id}", async Task<Results<NoContent,NotFound>> (MyContext dbContext, int id) =>
-//{
-//    var user = await dbContext.Users.FindAsync(id);
-
-//    if(user is not null)
-//    {
-//        dbContext.Remove(user);
-//        await dbContext.SaveChangesAsync();
-//        return TypedResults.NoContent();
-//    }
-//    else
-//        return TypedResults.NotFound();
-//} ).AddEndpointFilter<IdValidationFilter>();
+    if (user is not null)
+    {
+        try
+        {
+            dbContext.Remove(user);
+            await dbContext.SaveChangesAsync();
+            return TypedResults.NoContent();
+        }
+        catch (DbUpdateException ex)
+        {
+            return TypedResults.BadRequest($"Ошибка базы данных {ex.Message}");
+        }
+    }
+    else
+    {
+        return TypedResults.NotFound();
+    }
+}).AddEndpointFilter<IdValidationFilter>();
 
 //app.MapGet("/blogs/{id}", async Task<Results<Ok<BlogDTO>, NotFound>> (MyContext dbContext, int id) => { 
 
