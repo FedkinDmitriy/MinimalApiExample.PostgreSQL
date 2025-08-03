@@ -77,7 +77,6 @@ app.MapGet("/blogs/{id}", async Task<Results<Ok<BlogDTO>, NotFound>> (MyContext 
 
 }).AddEndpointFilter<IdValidationFilter>();
 
-
 app.MapGet("/users/{id}", async Task<Results<Ok<UserDTO>, NotFound>> (MyContext dbContext, int id) =>
 {
     var user = await dbContext.Users.AsNoTracking().Include(u => u.Blogs).FirstOrDefaultAsync(u => u.Id == id);
@@ -99,6 +98,35 @@ app.MapGet("/users/{id}", async Task<Results<Ok<UserDTO>, NotFound>> (MyContext 
     
     return TypedResults.NotFound();
 }).AddEndpointFilter<IdValidationFilter>();
+
+app.MapPost("/blogs{id}", async Task<Results<Created<BlogDTO>, BadRequest<string>>>(MyContext dbContext, BlogDTO blogDTO, int id) =>
+{
+    //var userExists = await dbContext.Users.AnyAsync(u => u.Id == userId);
+    //if (!userExists) return BadRequest("User not found");
+
+    var user = await dbContext.Users.FindAsync(id);
+    if(user is not null)
+    {
+        Blog blog = new()
+        {
+            Title = blogDTO.Title,
+            CreatedDate = blogDTO.CreatedDate,
+            Context = blogDTO.Context,
+            UserId = id
+        };
+        try
+        {
+            await dbContext.Blogs.AddAsync(blog);
+            await dbContext.SaveChangesAsync();
+            return TypedResults.Created("/blogs", blogDTO);
+        }
+        catch (Exception ex)
+        {
+            return TypedResults.BadRequest(ex.Message);
+        }
+    }
+    return TypedResults.BadRequest("Нет такого пользователя");
+});
 
 app.MapPost("/users", async (MyContext dbContext, User user) =>
 {

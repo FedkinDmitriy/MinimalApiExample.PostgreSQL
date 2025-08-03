@@ -1,26 +1,42 @@
 ﻿namespace MinimalApiExample.PostgreSQL.Data.Models
 {
-    public class User
+    /// <summary>
+    /// Сущность пользователя, представляющая запись в таблице Users базы данных.
+    /// Внутренний класс, не предназначен для прямого использования в API.
+    /// </summary>
+    internal class User
     {
         /// <summary>
-        /// ID пользователя
+        /// Уникальный идентификатор пользователя (первичный ключ).
         /// </summary>
+        /// <example>123</example>
         public int Id { get; set; }
+
         /// <summary>
-        /// Имя пользователя
+        /// Имя пользователя. Может содержать до 30 символов.
         /// </summary>
+        /// <example>"Иван"</example>
         public string? firstName { get; set; }
+
         /// <summary>
-        /// Фамилия пользователя
+        /// Фамилия пользователя. Может содержать до 50 символов.
         /// </summary>
+        /// <example>"Петров"</example>
         public string? lastName { get; set; }
+
         /// <summary>
-        /// Дата рождения пользователя
+        /// Дата рождения пользователя в формате ГГГГ-ММ-ДД.
         /// </summary>
+        /// <example>1990-05-15</example>
         public DateOnly dateOfBirth { get; set; }
 
-
-
-        public ICollection<Blog> Blogs { get; set; } = []; //навигационное свойство
+        /// <summary>
+        /// Навигационное свойство для коллекции блогов пользователя.
+        /// Связь один-ко-многим с сущностью <see cref="Blog"/>.
+        /// </summary>
+        /// <remarks>
+        /// Инициализируется пустой коллекцией для предотвращения null reference.
+        /// </remarks>
+        public ICollection<Blog> Blogs { get; set; } = [];
     }
 }
