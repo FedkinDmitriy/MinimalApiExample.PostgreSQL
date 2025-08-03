@@ -206,7 +206,7 @@ app.MapGet("/blogs/{id}", async Task<Results<Ok<BlogResponseDTO>, NotFound, BadR
     }
 }).AddEndpointFilter<IdValidationFilter>();
 
-app.MapPost("/blogs/{id}", async Task<Results<Created<BlogResponseDTO>, BadRequest<string>>> (MyContext dbContext, int id, BlogResponseDTO blogDTO) =>
+app.MapPost("/blogs/{id}", async Task<Results<Created<BlogResponseDTO>, BadRequest<string>>> (MyContext dbContext, int id, BlogCreateDTO blogDTO) =>
 {
     if (await dbContext.Users.AnyAsync(u => u.Id == id))
     {
@@ -222,7 +222,15 @@ app.MapPost("/blogs/{id}", async Task<Results<Created<BlogResponseDTO>, BadReque
             await dbContext.Blogs.AddAsync(blog);
             await dbContext.SaveChangesAsync();
 
-            return TypedResults.Created($"/blogs/{blog.Id}", blogDTO);
+            BlogResponseDTO resp = new()
+            {
+                Id = blog.Id,
+                Title = blog.Title,
+                CreatedDate = blog.CreatedDate,
+                Context = blog.Context
+            };
+
+            return TypedResults.Created($"/blogs/{resp.Id}", resp);
         }
         catch (Exception ex)
         {
