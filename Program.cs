@@ -136,19 +136,28 @@ app.MapPost("/users", async Task<Results<Created<UserCreateDTO>, BadRequest<stri
 })
 .AddEndpointFilter<UserValidationFilter>();
 
-//app.MapPut("/users", async Task<Results<NoContent, BadRequest, NotFound>> (MyContext dbContext, [FromBody] User updatedUser) =>
-//{
-//    if (updatedUser is null) return TypedResults.BadRequest();
+app.MapPut("/users/{id}", async Task<Results<NoContent, BadRequest<string>, NotFound>> (MyContext dbContext, [FromBody] UserCreateDTO updatedUser, int id) =>
+{
+    try
+    {
+        var existingUser = await dbContext.Users.FindAsync(id);
+        if (existingUser is null) return TypedResults.NotFound();
 
-//    var existingUser = await dbContext.Users.FindAsync(updatedUser.Id);
+        //dbContext.Entry(existingUser).CurrentValues.SetValues(updatedUser); //может стереть Blogs в модели User
 
-//    if (existingUser is null) return TypedResults.NotFound();
+        existingUser.firstName = updatedUser.firstName;
+        existingUser.lastName = updatedUser.lastName;
+        existingUser.dateOfBirth = updatedUser.dateOfBirth;
 
-//    dbContext.Entry(existingUser).CurrentValues.SetValues(updatedUser);
+        await dbContext.SaveChangesAsync();
+        return TypedResults.NoContent();
+    }
+    catch (Exception ex)
+    {
+        return TypedResults.BadRequest(ex.Message);
+    }
+}).AddEndpointFilter<UserValidationFilter>();
 
-//    await dbContext.SaveChangesAsync();
-//    return TypedResults.NoContent();
-//});
 
 //app.MapDelete("/users/{id}", async Task<Results<NoContent,NotFound>> (MyContext dbContext, int id) =>
 //{
