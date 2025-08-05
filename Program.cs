@@ -6,6 +6,7 @@ using MinimalApiExample.PostgreSQL.Data;
 using MinimalApiExample.PostgreSQL.Data.DTOs;
 using MinimalApiExample.PostgreSQL.Data.Filters;
 using MinimalApiExample.PostgreSQL.Data.Models;
+using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,7 +14,13 @@ builder.Services.AddProblemDetails(); //добавляет реализацию IProblemDetailsServ
 
 // Добавляем сервисы Swagger
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+//builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    c.IncludeXmlComments(xmlPath);
+});
 
 builder.Services.AddDbContext<MyContext>(o => o.UseNpgsql("Host=localhost;Port=5432;Database=TestDb;Username=postgres;Password=251187"));
 
